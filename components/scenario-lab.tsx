@@ -1,14 +1,15 @@
 'use client'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowLeft, ShieldCheck, Droplets, Sun, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { calculateFloodRisk, calculateHeatRisk, riskLevel, riskLabel, scenarioDefaults } from '@/lib/climate/types'
+import { calculateFloodRisk, calculateHeatRisk, riskLevel, riskLabel } from '@/lib/climate/types'
 
 export default function ScenarioLab() {
   const [hazard, setHazard] = useState<'flood' | 'heat'>('flood')
-  const [floodInputs, setFloodInputs] = useState(scenarioDefaults.flood)
-  const [heatInputs, setHeatInputs] = useState(scenarioDefaults.heat)
+  const [floodInputs, setFloodInputs] = useState({ rainfallIntensity: 0, terrainSusceptibility: 0, drainageSusceptibility: 0 })
+  const [heatInputs, setHeatInputs] = useState({ temperatureC: 20, vegetationCoverage: 0, builtUpExposure: 0 })
+  useEffect(() => { fetch('/api/weather?lat=9.0765&lng=7.3986').then(r => r.json()).then(({ data }) => { const c = data.current; setFloodInputs({ rainfallIntensity: Math.min(150, Math.round((c.precipitation + c.rain) * 30)), terrainSusceptibility: Math.round(c.relative_humidity_2m * 0.7), drainageSusceptibility: c.precipitation > 0 ? 65 : 25 }); setHeatInputs({ temperatureC: c.temperature_2m, vegetationCoverage: Math.max(0, 100 - c.relative_humidity_2m), builtUpExposure: Math.min(100, Math.round(c.temperature_2m * 2)) }) }).catch(() => undefined) }, [])
 
   const isFlood = hazard === 'flood'
   const result = isFlood
@@ -170,7 +171,7 @@ export default function ScenarioLab() {
             </div>
 
             <button
-              onClick={() => isFlood ? setFloodInputs(scenarioDefaults.flood) : setHeatInputs(scenarioDefaults.heat)}
+              onClick={() => isFlood ? setFloodInputs({ rainfallIntensity: 0, terrainSusceptibility: 0, drainageSusceptibility: 0 }) : setHeatInputs({ temperatureC: 20, vegetationCoverage: 0, builtUpExposure: 0 })}
               className="mt-6 w-full rounded-lg border border-[#dbe4dc] px-4 py-2 text-sm font-medium text-[#5a7067] hover:bg-[#f7faf4] transition"
             >
               Reset to defaults

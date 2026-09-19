@@ -1,2 +1,2 @@
-import TerraShieldApp from '@/components/terrashield-app'
-export default function DashboardPage(){ return <TerraShieldApp page="dashboard"/> }
+import LiveDashboard from '@/components/live-dashboard'
+export default function DashboardPage(){ return <LiveDashboard /> }
