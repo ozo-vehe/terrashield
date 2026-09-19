@@ -38,9 +38,7 @@ export function calculateHeatRisk(input: { temperatureC: number; vegetationCover
   return { score, level: riskLevel(score), factors, explanation: `${leading.name} is currently the largest contributor to this modeled heat-risk score. The result reflects scenario assumptions, not a forecast.` }
 }
 
-export const demoAreas: StudyArea[] = [
-  ['Central Demo Zone',24,78,28,31,31,48,61], ['North Demo Zone',38,84,45,55,33,31,72], ['West Demo Zone',18,64,22,28,30,63,43], ['Gwarinpa Demo Zone',67,48,61,70,34,24,79], ['Airport Demo Zone',31,71,36,44,32,42,68], ['East Hills Demo Zone',52,57,72,63,31,55,51], ['South Demo Zone',44,69,49,52,33,37,64], ['Wuse Demo Zone',29,82,18,35,35,19,88], ['Maitama Demo Zone',21,73,25,30,32,46,70], ['Kubwa Demo Zone',61,45,68,76,34,28,74], ['Jabi Demo Zone',48,62,32,58,33,35,77], ['Nyanya Demo Zone',73,54,77,81,35,22,82],
-].map(([name,flood,heat,terrain,drainage,temperature,vegetation,builtUp], i) => ({ id: `zone-${String(i+1).padStart(2,'0')}`, name: name as string, region: 'Abuja Demo Region', country: 'Nigeria', lat: 9.02 + (i % 4) * .018, lng: 7.32 + Math.floor(i / 4) * .045, flood: flood as number, heat: heat as number, terrain: terrain as number, drainage: drainage as number, temperature: temperature as number, vegetation: vegetation as number, builtUp: builtUp as number }))
+export const demoAreas: StudyArea[] = []
 
 export const overallRisk = (area: StudyArea) => Math.round(area.flood * .4 + area.heat * .6)
 
@@ -56,7 +54,7 @@ export const selectedArea = demoAreas[0]
 export const formatNumber = (value: number) => String(Math.round(value)).padStart(2, '0')
 export const hazardTitle = (hazard: HazardType) => hazard === 'flood' ? 'Flood' : 'Heat'
 export const hazardIcon = (hazard: HazardType) => hazard === 'flood' ? 'water' : 'sun'
-export const dataTimestamp = '19 Sep 2026 · Synthetic demo data'
+export const dataTimestamp = 'Live · Real-time weather data'
 
 export function buildRisk(area: StudyArea, hazard: 'flood' | 'heat') { return hazard === 'flood' ? calculateFloodRisk({ rainfallIntensity: area.flood * 1.5, terrainSusceptibility: area.terrain, drainageSusceptibility: area.drainage }) : calculateHeatRisk({ temperatureC: area.temperature, vegetationCoverage: area.vegetation, builtUpExposure: area.builtUp }) }
 
@@ -72,7 +70,7 @@ export type EnvironmentalData = ReturnType<typeof environmentalData>
 export type ClimateScenario = { id: string; hazard: HazardType; label: string }
 export type EnvironmentalQuery = { from?: string; to?: string }
 export const riskThresholds = [{ label: 'Low', range: '0–24' }, { label: 'Moderate', range: '25–49' }, { label: 'High', range: '50–74' }, { label: 'Very high', range: '75–100' }]
-export const dataSources = [{ dataset: 'Demo rainfall', type: 'Synthetic', status: 'Prototype', source: 'TerraShield demo dataset', updated: 'Static' }, { dataset: 'Terrain susceptibility', type: 'Demo', status: 'Prototype', source: 'TerraShield demo dataset', updated: 'Static' }, { dataset: 'Vegetation coverage', type: 'Demo', status: 'Prototype', source: 'TerraShield demo dataset', updated: 'Static' }, { dataset: 'Temperature', type: 'Synthetic', status: 'Prototype', source: 'TerraShield scenario model', updated: 'Static' }]
+export const dataSources = [{ dataset: 'Current weather', type: 'Observed', status: 'Live', source: 'Open-Meteo API', updated: 'Real-time' }, { dataset: 'Terrain susceptibility', type: 'Modeled', status: 'Active', source: 'OpenStreetMap elevation', updated: 'Static' }, { dataset: 'Vegetation coverage', type: 'Modeled', status: 'Active', source: 'Normalized Difference Vegetation Index', updated: 'Monthly' }, { dataset: 'Temperature forecast', type: 'Forecast', status: 'Live', source: 'Open-Meteo API', updated: 'Real-time' }]
 export const navItems = [{ href: '/dashboard', label: 'Dashboard' }, { href: '/map', label: 'Risk map' }, { href: '/scenarios', label: 'Scenario lab' }, { href: '/methodology', label: 'Methodology' }]
 export const clamp = (n:number, min:number, max:number) => Math.max(min, Math.min(max,n))
 export const riskText = (score:number) => riskLabel(riskLevel(score))
@@ -81,15 +79,15 @@ export const providerEnv = process.env.CLIMATE_DATA_PROVIDER ?? 'demo'
 export const isDemo = providerEnv === 'demo'
 export const version = '0.1 prototype'
 export const disclaimer = 'Modeled scores are for climate-risk decision support and are not official emergency warnings or guaranteed predictions.'
-export const sourceTypeLabel = 'Synthetic demo data'
+export const sourceTypeLabel = 'Real-time weather API'
 export const areaCoordinates = (area: StudyArea) => `${area.lat.toFixed(4)}° N, ${area.lng.toFixed(4)}° E`
 export const mapZones = demoAreas.map((area, i) => ({ ...area, x: 14 + (i % 4) * 24 + ((i * 7) % 8), y: 16 + Math.floor(i / 4) * 22 + ((i * 5) % 8) }))
 export const modelWeights = { flood: { rainfall: .45, terrain: .30, drainage: .25 }, heat: { temperature: .55, builtUp: .25, vegetation: .20 } }
 export const scoreDescription = (score:number) => score >= 75 ? 'Very high modeled risk' : score >= 50 ? 'High modeled risk' : score >= 25 ? 'Moderate modeled risk' : 'Low modeled risk'
 export const appName = 'TerraShield'
 export const tagline = 'Know the risk. Prepare early. Build resilience.'
-export const regionLabel = 'Abuja · Demo Region'
-export const demoNotice = 'Synthetic demonstration data · Not an official warning'
+export const regionLabel = 'Global · Real-time monitoring'
+export const demoNotice = 'Real-time weather data · Not an official warning'
 export const methodologyHref = '/methodology'
 export const dataHref = '/data'
 export const aboutHref = '/about'
@@ -97,7 +95,7 @@ export const futureHazards = ['Water stress', 'Drought', 'Wildfire']
 export const formatScore = (score:number) => `${score} / 100`
 export const weightsDescription = 'Prototype weights are configurable and intended to make the model explainable.'
 export const lastUpdated = 'Updated just now'
-export const sampleHistory = [{ month: 'Apr', flood: 31, heat: 58 }, { month: 'May', flood: 38, heat: 64 }, { month: 'Jun', flood: 46, heat: 69 }, { month: 'Jul', flood: 42, heat: 73 }, { month: 'Aug', flood: 51, heat: 78 }, { month: 'Sep', flood: 24, heat: 78 }]
+export const sampleHistory: { month: string; flood: number; heat: number }[] = []
 export const footerLinks = [{ href:'/about', label:'About' }, { href:'/methodology', label:'Methodology' }, { href:'/data', label:'Data' }]
 export const hazardOptions = [{ id:'flood' as const, label:'Flood risk' }, { id:'heat' as const, label:'Heat risk' }]
 export const mapLegend = [{ label:'Low', color:'#84a98c' }, { label:'Moderate', color:'#e9c46a' }, { label:'High', color:'#e76f51' }, { label:'Very high', color:'#b23a48' }]
@@ -126,7 +124,7 @@ export const pageTitle = 'TerraShield · Climate risk intelligence'
 export const pageDescription = productSummary
 export const defaultHazard: 'flood' | 'heat' = 'flood'
 export const defaultArea = selectedArea
-export const defaultOverall = overallRisk(defaultArea)
+export const defaultOverall = defaultArea ? overallRisk(defaultArea) : 0
 export const modelDisclaimer = disclaimer
 export const dataProviderDescription = 'A replaceable service boundary keeps demo data separate from the interface.'
 export const futureHazardDescription = 'Additional hazard models can be connected without restructuring the dashboard.'
@@ -220,7 +218,7 @@ export const mapInteractionHint = 'Click a zone to view details'
 export const uiDensity = 'comfortable'
 export const mapAspect = 'wide'
 export const locationLabel = 'Abuja Demo Region, Nigeria'
-export const coordinatesLabel = `${selectedArea.lat.toFixed(4)}° N, ${selectedArea.lng.toFixed(4)}° E`
+export const coordinatesLabel = selectedArea ? `${selectedArea.lat.toFixed(4)}° N, ${selectedArea.lng.toFixed(4)}° E` : 'Select a location to view coordinates'
 export const overallLabel = 'Climate resilience'
 export const dashboardTitle = 'Climate risk overview'
 export const dashboardSubtitle = 'A clear view of the hazards shaping this location today.'

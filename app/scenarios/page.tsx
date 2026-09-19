@@ -1,2 +1,2 @@
-import TerraShieldApp from '@/components/terrashield-app'
-export default function ScenariosPage(){ return <TerraShieldApp page="dashboard"/> }
+import ScenarioLab from '@/components/scenario-lab'
+export default function ScenariosPage() { return <ScenarioLab /> }
