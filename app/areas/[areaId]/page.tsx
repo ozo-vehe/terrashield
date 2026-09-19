@@ -1,7 +1,8 @@
 'use client'
 import { useParams } from 'next/navigation'
+import useSWR from 'swr'
 import Link from 'next/link'
-import { ArrowLeft, BarChart3, Droplets, Sun, Trees, ShieldCheck, Info, AlertCircle } from 'lucide-react'
+import { ArrowLeft, BarChart3, CloudRain, Droplets, Sun, Trees, ShieldCheck, Info, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   demoAreas,
@@ -65,6 +66,24 @@ function ScoreCard({
       </div>
     </div>
   )
+}
+
+function WeatherCard({ lat, lng }: { lat: number; lng: number }) {
+  const { data, error, isLoading } = useSWR(`/api/weather?lat=${lat}&lng=${lng}`, (url) => fetch(url).then((response) => response.json()))
+  const current = data?.data?.current
+  const labels: Record<number, string> = { 0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast', 45: 'Fog', 48: 'Rime fog', 51: 'Light drizzle', 61: 'Rain', 63: 'Moderate rain', 65: 'Heavy rain', 80: 'Rain showers', 95: 'Thunderstorm' }
+
+  return <div className="rounded-2xl border border-[#c9d8cc] bg-[#edf5ec] p-6">
+    <div className="flex items-start justify-between gap-4">
+      <div><div className="text-xs font-semibold uppercase tracking-[.12em] text-[#55766a]">Live conditions</div><h2 className="mt-2 text-xl font-semibold text-[#18332b]">Current weather at this location</h2></div>
+      <CloudRain className="size-6 text-[#4e806e]" />
+    </div>
+    {isLoading && <p className="mt-5 text-sm text-[#71887d]">Loading live weather…</p>}
+    {error || data?.error ? <p className="mt-5 text-sm text-[#a64b3a]">Live weather is temporarily unavailable. Modeled scores remain available.</p> : current && <div className="mt-5 grid gap-4 sm:grid-cols-4">
+      {[[`${Math.round(current.temperature_2m)}°C`, 'Temperature'], [`${Math.round(current.apparent_temperature)}°C`, 'Feels like'], [`${current.relative_humidity_2m}%`, 'Humidity'], [`${Math.round(current.wind_speed_10m)} km/h`, 'Wind']].map(([value, label]) => <div key={label} className="rounded-xl border border-[#d5e3d4] bg-white/70 p-4"><div className="text-xl font-semibold text-[#18332b]">{value}</div><div className="mt-1 text-xs text-[#71887d]">{label}</div></div>)}
+      <div className="sm:col-span-4 text-sm text-[#55766a]">{labels[current.weather_code] ?? 'Current conditions'} · Precipitation: {current.precipitation} mm · Source: Open-Meteo</div>
+    </div>}
+  </div>
 }
 
 function FactorsSection({
@@ -166,6 +185,8 @@ export default function AreaPage() {
           <ScoreCard title="Overall resilience" score={overall} icon={ShieldCheck} />
           <ScoreCard title="Water stress" score={52} icon={Trees} />
         </div>
+
+        <div className="mb-8"><WeatherCard lat={area.lat} lng={area.lng} /></div>
 
         {/* Risk analysis */}
         <div className="mb-8 grid gap-5 lg:grid-cols-2">
