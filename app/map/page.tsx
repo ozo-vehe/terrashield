@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowLeft, MapPinned } from 'lucide-react'
 import InteractiveMap from '@/components/interactive-map'
+import { demoBadgeLabel, mapZoneDisclaimer } from '@/lib/climate/types'
 
 export default function MapPage() {
   return (
@@ -19,6 +20,13 @@ export default function MapPage() {
             <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[.12em] text-[#71887d]"><MapPinned className="size-4" /> Risk map</div>
             <h1 className="text-3xl font-semibold tracking-[-.055em] sm:text-4xl">Abuja climate-risk locations</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#71887d]">A real street map with modeled risk locations. Select any marker to inspect the area details.</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#c9d8cc] bg-[#f1f5ef] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[.08em] text-[#397158]" title={mapZoneDisclaimer}>
+                <span className="size-1.5 rounded-full bg-[#5e9a75]" />
+                {demoBadgeLabel} · Illustrative modeled zones
+              </span>
+              <span className="text-xs text-[#71887d]">These zones do not represent official administrative boundaries or validated flood/heat-risk maps.</span>
+            </div>
           </div>
         </div>
         <div className="overflow-hidden rounded-2xl border border-[#dbe4dc] bg-white p-2 shadow-sm">

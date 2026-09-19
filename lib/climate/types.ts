@@ -38,7 +38,20 @@ export function calculateHeatRisk(input: { temperatureC: number; vegetationCover
   return { score, level: riskLevel(score), factors, explanation: `${leading.name} is currently the largest contributor to this modeled heat-risk score. The result reflects scenario assumptions, not a forecast.` }
 }
 
-export const demoAreas: StudyArea[] = []
+export const demoAreas: StudyArea[] = [
+  { id: 'zone-01', name: 'Wuse Demo Zone', region: 'Abuja FCT', country: 'Nigeria', lat: 9.0820, lng: 7.4720, flood: 62, heat: 71, terrain: 48, drainage: 55, temperature: 35, vegetation: 35, builtUp: 78 },
+  { id: 'zone-02', name: 'Garki Demo Zone', region: 'Abuja FCT', country: 'Nigeria', lat: 9.0250, lng: 7.4910, flood: 68, heat: 66, terrain: 52, drainage: 60, temperature: 34, vegetation: 28, builtUp: 72 },
+  { id: 'zone-03', name: 'Maitama Demo Zone', region: 'Abuja FCT', country: 'Nigeria', lat: 9.1160, lng: 7.4880, flood: 34, heat: 58, terrain: 30, drainage: 38, temperature: 33, vegetation: 52, builtUp: 55 },
+  { id: 'zone-04', name: 'Gwarinpa Demo Zone', region: 'Abuja FCT', country: 'Nigeria', lat: 9.1580, lng: 7.4320, flood: 44, heat: 54, terrain: 40, drainage: 42, temperature: 32, vegetation: 48, builtUp: 50 },
+  { id: 'zone-05', name: 'Nyanya Demo Zone', region: 'Abuja FCT', country: 'Nigeria', lat: 9.0410, lng: 7.5520, flood: 76, heat: 68, terrain: 58, drainage: 72, temperature: 35, vegetation: 22, builtUp: 65 },
+  { id: 'zone-06', name: 'Karu Demo Zone', region: 'Abuja FCT', country: 'Nigeria', lat: 9.0660, lng: 7.5680, flood: 72, heat: 64, terrain: 55, drainage: 68, temperature: 34, vegetation: 30, builtUp: 60 },
+  { id: 'zone-07', name: 'Jabi Demo Zone', region: 'Abuja FCT', country: 'Nigeria', lat: 9.0960, lng: 7.4520, flood: 58, heat: 69, terrain: 44, drainage: 50, temperature: 35, vegetation: 32, builtUp: 75 },
+  { id: 'zone-08', name: 'Lugbe Demo Zone', region: 'Abuja FCT', country: 'Nigeria', lat: 8.9920, lng: 7.4020, flood: 50, heat: 62, terrain: 42, drainage: 48, temperature: 34, vegetation: 40, builtUp: 58 },
+  { id: 'zone-09', name: 'Kubwa Demo Zone', region: 'Abuja FCT', country: 'Nigeria', lat: 9.1760, lng: 7.3720, flood: 46, heat: 56, terrain: 38, drainage: 44, temperature: 32, vegetation: 45, builtUp: 48 },
+  { id: 'zone-10', name: 'Gwagwalada Demo Zone', region: 'Abuja FCT', country: 'Nigeria', lat: 8.9580, lng: 7.0820, flood: 54, heat: 60, terrain: 46, drainage: 52, temperature: 34, vegetation: 38, builtUp: 42 },
+  { id: 'zone-11', name: 'Kuje Demo Zone', region: 'Abuja FCT', country: 'Nigeria', lat: 8.8720, lng: 7.2420, flood: 40, heat: 52, terrain: 34, drainage: 36, temperature: 31, vegetation: 55, builtUp: 35 },
+  { id: 'zone-12', name: 'Bwari Demo Zone', region: 'Abuja FCT', country: 'Nigeria', lat: 9.2720, lng: 7.3420, flood: 36, heat: 50, terrain: 32, drainage: 34, temperature: 30, vegetation: 58, builtUp: 38 },
+]
 
 export const overallRisk = (area: StudyArea) => Math.round(area.flood * .4 + area.heat * .6)
 
@@ -62,7 +75,7 @@ export function apiError(message: string, code = 'INVALID_REQUEST') { return { e
 
 export const environmentalData = (area: StudyArea) => ({ rainfallBaseline: Math.round(area.flood * 1.5), terrainSusceptibility: area.terrain, drainageSusceptibility: area.drainage, temperatureBaseline: area.temperature, vegetationCoverage: area.vegetation, builtUpExposure: area.builtUp, sourceType: 'synthetic' as const })
 
-export const scenarioDefaults = { flood: { rainfallIntensity: 50, terrainSusceptibility: 48, drainageSusceptibility: 55 }, heat: { temperatureC: 36, vegetationCoverage: 35, builtUpExposure: 70 } }
+export const scenarioDefaults = { flood: { rainfallIntensity: 80, terrainSusceptibility: 45, drainageSusceptibility: 55 }, heat: { temperatureC: 35, vegetationCoverage: 40, builtUpExposure: 65 } }
 
 export type ScenarioInputs = typeof scenarioDefaults
 export type Recommendation = ReturnType<typeof generateRecommendations>[number]
@@ -79,6 +92,16 @@ export const providerEnv = process.env.CLIMATE_DATA_PROVIDER ?? 'demo'
 export const isDemo = providerEnv === 'demo'
 export const version = '0.1 prototype'
 export const disclaimer = 'Modeled scores are for climate-risk decision support and are not official emergency warnings or guaranteed predictions.'
+export const liveDataDisclaimer = 'Current weather observations are used as inputs to TerraShield\'s prototype risk model. Risk scores are modeled estimates and are not official forecasts or warnings.'
+export const syntheticDataDisclaimer = 'These values are synthetic demonstration data created for the TerraShield prototype. They are not official measurements, forecasts, or administrative boundaries.'
+export const mapZoneDisclaimer = 'These zones are synthetic demonstration areas used to illustrate TerraShield\'s climate-risk modeling. They do not represent official administrative boundaries or validated flood/heat-risk maps.'
+export const demoBadgeLabel = 'DEMO DATA'
+export const liveBadgeLabel = 'LIVE WEATHER DATA'
+export const fallbackLocationMessage = 'Unable to retrieve current location. Showing Abuja demo data instead.'
+export const fallbackWeatherMessage = 'Live weather unavailable. Showing Abuja demo data instead.'
+export const modeledRiskLabel = 'MODELED RISK'
+export const demoEnvironmentLabel = 'Demo environment'
+export const mapDemoLabel = 'DEMO DATA · Illustrative modeled zones'
 export const sourceTypeLabel = 'Real-time weather API'
 export const areaCoordinates = (area: StudyArea) => `${area.lat.toFixed(4)}° N, ${area.lng.toFixed(4)}° E`
 export const mapZones = demoAreas.map((area, i) => ({ ...area, x: 14 + (i % 4) * 24 + ((i * 7) % 8), y: 16 + Math.floor(i / 4) * 22 + ((i * 5) % 8) }))

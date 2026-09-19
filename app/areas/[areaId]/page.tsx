@@ -2,19 +2,18 @@
 import { useParams } from 'next/navigation'
 import useSWR from 'swr'
 import Link from 'next/link'
-import { ArrowLeft, BarChart3, CloudRain, Droplets, Sun, Trees, ShieldCheck, Info, AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ArrowLeft, ChartBar as BarChart3, CloudRain, Droplets, Sun, Trees, ShieldCheck, Info, CircleAlert as AlertCircle } from 'lucide-react'
 import {
   demoAreas,
   calculateFloodRisk,
-  calculateHeatRisk,
   riskLabel,
   riskLevel,
-  formatScore,
   overallRisk,
   disclaimer,
   buildRisk,
   areaCoordinates,
+  demoBadgeLabel,
+  liveBadgeLabel,
 } from '@/lib/climate/types'
 
 function Header() {
@@ -30,15 +29,7 @@ function Header() {
   )
 }
 
-function ScoreCard({
-  title,
-  score,
-  icon: Icon,
-}: {
-  title: string
-  score: number
-  icon: typeof Droplets
-}) {
+function ScoreCard({ title, score, icon: Icon }: { title: string; score: number; icon: typeof Droplets }) {
   const level = riskLevel(score)
   const colors: Record<string, string> = {
     low: 'bg-[#84a98c] text-white',
@@ -46,7 +37,6 @@ function ScoreCard({
     high: 'bg-[#e76f51] text-white',
     'very-high': 'bg-[#b23a48] text-white',
   }
-
   return (
     <div className="rounded-2xl border border-[#dbe4dc] bg-white/70 p-6">
       <div className="flex items-center gap-3 mb-4">
@@ -75,29 +65,24 @@ function WeatherCard({ lat, lng }: { lat: number; lng: number }) {
 
   return <div className="rounded-2xl border border-[#c9d8cc] bg-[#edf5ec] p-6">
     <div className="flex items-start justify-between gap-4">
-      <div><div className="text-xs font-semibold uppercase tracking-[.12em] text-[#55766a]">Live conditions</div><h2 className="mt-2 text-xl font-semibold text-[#18332b]">Current weather at this location</h2></div>
+      <div><div className="flex items-center gap-2"><div className="text-xs font-semibold uppercase tracking-[.12em] text-[#55766a]">Live conditions</div>{!error && !data?.error && current && <span className="inline-flex items-center gap-1.5 rounded-full border border-[#b8d7c2] bg-[#dcebdc] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[.08em] text-[#376044]" title="Current weather observations from Open-Meteo. Risk scores are modeled estimates.">{liveBadgeLabel}</span>}</div><h2 className="mt-2 text-xl font-semibold text-[#18332b]">Current weather at this location</h2></div>
       <CloudRain className="size-6 text-[#4e806e]" />
     </div>
-    {isLoading && <p className="mt-5 text-sm text-[#71887d]">Loading live weather…</p>}
-    {error || data?.error ? <p className="mt-5 text-sm text-[#a64b3a]">Live weather is temporarily unavailable. Modeled scores remain available.</p> : current && <div className="mt-5 grid gap-4 sm:grid-cols-4">
+    {isLoading && <p className="mt-5 text-sm text-[#71887d]" role="status">Loading live weather…</p>}
+    {error || data?.error ? <p className="mt-5 text-sm text-[#a64b3a]" role="alert">Live weather is temporarily unavailable. Modeled scores remain available.</p> : current && <div className="mt-5 grid gap-4 sm:grid-cols-4">
       {[[`${Math.round(current.temperature_2m)}°C`, 'Temperature'], [`${Math.round(current.apparent_temperature)}°C`, 'Feels like'], [`${current.relative_humidity_2m}%`, 'Humidity'], [`${Math.round(current.wind_speed_10m)} km/h`, 'Wind']].map(([value, label]) => <div key={label} className="rounded-xl border border-[#d5e3d4] bg-white/70 p-4"><div className="text-xl font-semibold text-[#18332b]">{value}</div><div className="mt-1 text-xs text-[#71887d]">{label}</div></div>)}
-      <div className="sm:col-span-4 text-sm text-[#55766a]">{labels[current.weather_code] ?? 'Current conditions'} · Precipitation: {current.precipitation} mm · Source: Open-Meteo</div>
+      <div className="sm:col-span-4 text-sm text-[#55766a]">{labels[current.weather_code] ?? 'Current conditions'} · Precipitation: {current.precipitation} mm · Source: Open-Meteo · Live observations used as model inputs</div>
     </div>}
+    <p className="mt-4 text-xs leading-5 text-[#71887d]">Weather observations are live. Area risk scores and environmental characteristics are synthetic demo data.</p>
   </div>
 }
 
-function FactorsSection({
-  hazard,
-  result,
-}: {
-  hazard: 'flood' | 'heat'
-  result: ReturnType<typeof calculateFloodRisk>
-}) {
+function FactorsSection({ hazard, result }: { hazard: 'flood' | 'heat'; result: ReturnType<typeof calculateFloodRisk> }) {
   return (
     <div className="rounded-2xl border border-[#dbe4dc] bg-white/70 p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <div className="text-sm font-semibold">Risk drivers</div>
+          <div className="text-sm font-semibold">{hazard === 'flood' ? 'Flood' : 'Heat'} risk drivers</div>
           <div className="mt-1 text-xs text-[#80958b]">What contributes to this score</div>
         </div>
         <BarChart3 className="size-5 text-[#739282]" />
@@ -110,10 +95,7 @@ function FactorsSection({
               <span className="font-semibold text-[#18332b]">{Math.round(f.contribution)} pts</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-[#e3ebe3]">
-              <div
-                className="h-full rounded-full bg-[#4f806d]"
-                style={{ width: `${Math.min(100, f.contribution * 2)}%` }}
-              />
+              <div className="h-full rounded-full bg-[#4f806d]" style={{ width: `${Math.min(100, f.contribution * 2)}%` }} />
             </div>
             <div className="mt-1 text-xs text-[#80958b]">{f.description}</div>
           </div>
@@ -142,10 +124,7 @@ export default function AreaPage() {
                 <p className="text-sm text-[#5a7067] mb-4">
                   The study area {areaId} is not available in the demo dataset.
                 </p>
-                <Link
-                  href="/dashboard"
-                  className="inline-block rounded-lg bg-[#18332b] px-4 py-2 text-sm font-medium text-white hover:bg-[#315548]"
-                >
+                <Link href="/dashboard" className="inline-block rounded-lg bg-[#18332b] px-4 py-2 text-sm font-medium text-white hover:bg-[#315548]">
                   Return to dashboard
                 </Link>
               </div>
@@ -165,20 +144,16 @@ export default function AreaPage() {
     <>
       <Header />
       <main className="mx-auto max-w-7xl px-5 py-8 lg:px-8 lg:py-12">
-        {/* Header */}
         <div className="mb-10">
-          <div className="mb-3 flex items-center gap-2 text-xs font-medium text-[#71887d]">
-            <span className="size-2 rounded-full bg-[#5e9a75]" />
-            {disclaimer}
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#c9d8cc] bg-[#f1f5ef] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[.08em] text-[#397158]" title="These values are synthetic demonstration data created for the TerraShield prototype. They are not official measurements, forecasts, or administrative boundaries."><span className="size-1.5 rounded-full bg-[#5e9a75]" />{demoBadgeLabel}</span>
+            <span className="text-xs font-medium text-[#71887d]">All risk scores are modeled estimates, not official forecasts or warnings.</span>
           </div>
           <h1 className="text-4xl font-semibold tracking-[-.055em] text-[#18332b] sm:text-5xl">{areaName}</h1>
-          <p className="mt-2 text-base text-[#71887d]">
-            {area.region} · Nigeria
-          </p>
+          <p className="mt-2 text-base text-[#71887d]">{area.region} · Nigeria</p>
           <p className="mt-1 text-sm text-[#80958b]">{areaCoordinates(area)}</p>
         </div>
 
-        {/* Score cards */}
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <ScoreCard title="Flood risk" score={area.flood} icon={Droplets} />
           <ScoreCard title="Heat risk" score={area.heat} icon={Sun} />
@@ -188,13 +163,11 @@ export default function AreaPage() {
 
         <div className="mb-8"><WeatherCard lat={area.lat} lng={area.lng} /></div>
 
-        {/* Risk analysis */}
         <div className="mb-8 grid gap-5 lg:grid-cols-2">
           <FactorsSection hazard="flood" result={floodRisk} />
           <FactorsSection hazard="heat" result={heatRisk} />
         </div>
 
-        {/* Environmental data */}
         <div className="rounded-2xl border border-[#dbe4dc] bg-white/70 p-6">
           <div className="mb-6 flex items-center gap-2">
             <Info className="size-5 text-[#4e806e]" />
@@ -240,7 +213,6 @@ export default function AreaPage() {
           </div>
         </div>
 
-        {/* Action buttons */}
         <div className="mt-8 flex gap-3">
           <Link href="/dashboard" className="rounded-lg bg-[#18332b] px-6 py-3 font-medium text-white hover:bg-[#315548]">
             Back to dashboard
@@ -249,6 +221,7 @@ export default function AreaPage() {
             Explore scenarios
           </Link>
         </div>
+        <p className="mt-6 text-xs leading-5 text-[#80958b]">{disclaimer}</p>
       </main>
     </>
   )
