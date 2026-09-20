@@ -59,10 +59,28 @@ export const demoAreas: StudyArea[] = [
 export const overallRisk = (area: StudyArea) => Math.round(area.flood * .4 + area.heat * .6)
 
 export function generateRecommendations(hazard: HazardType, result: RiskResult) {
-  const flood = ['Monitor official emergency information.', 'Avoid low-lying routes when flooding is occurring.', 'Inspect local drainage pathways and identify vulnerable routes.']
-  const heat = ['Avoid prolonged exposure during peak heat.', 'Stay hydrated and seek shade or cooler environments.', 'Identify areas with low vegetation and consider shade interventions.']
-  return (hazard === 'flood' ? flood : heat).map((title, i) => ({ id: `${hazard}-${i}`, title, description: 'General preparedness guidance for this modeled scenario.', priority: result.score > 60 ? 'high' : 'medium' as 'high' | 'medium' }))
-}
+  const leading = result.factors.toSorted((a, b) => b.contribution - a.contribution)[0]
+  const priority = (contribution: number): 'high' | 'medium' => contribution >= 20 || result.score >= 75 ? 'high' : 'medium'
+  const guidance = hazard === 'flood'
+    ? {
+        'Rainfall intensity': ['Monitor rainfall alerts and clear nearby inlets before peak rainfall.', 'Prioritize routes that avoid low-lying crossings during intense rain.'],
+        'Terrain susceptibility': ['Inspect slopes and runoff paths for pooling or erosion.', 'Keep people and critical assets away from steep, concentrated flow paths.'],
+        'Drainage susceptibility': ['Clear local drains and document blocked or undersized outlets.', 'Set an escalation plan for streets that regularly pond.'],
+      }
+    : {
+        Temperature: ['Plan outdoor work around cooler hours and monitor heat alerts.', 'Provide hydration, shade, and cool recovery areas for exposed people.'],
+        'Built-up exposure': ['Prioritize shade, reflective surfaces, and cooling at dense built-up locations.', 'Check heat-sensitive facilities and reduce unshaded daytime activity.'],
+        'Vegetation vulnerability': ['Protect existing vegetation and prioritize shade planting in exposed areas.', 'Identify low-cover locations for targeted greening interventions.'],
+      }
+  const leadingGuidance = guidance[leading.name as keyof typeof guidance] ?? []
+  const fallback = hazard === 'flood' ? 'Review local drainage and avoid exposed low-lying routes.' : 'Reduce prolonged exposure and increase access to shade and water.'
+  return [...leadingGuidance, fallback].slice(0, 3).map((title, i) => ({
+    id: `${hazard}-${leading.name}-${i}`,
+    title,
+    description: `${leading.name} contributes ${Math.round(leading.contribution)} points to this ${riskLabel(result.level).toLowerCase()} modeled score.`,
+    priority: priority(i === 0 ? leading.contribution : result.score * 0.25),
+  }))
+} 
 
 export interface ClimateDataProvider { getAreas(): Promise<StudyArea[]>; getArea(id: string): Promise<StudyArea | undefined> }
 export const demoProvider: ClimateDataProvider = { async getAreas() { return demoAreas }, async getArea(id) { return demoAreas.find(a => a.id === id) } }

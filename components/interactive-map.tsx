@@ -17,7 +17,7 @@ export default function InteractiveMap({ hazard = 'flood', onAreaSelect }: Inter
       const map = L.map(mapContainer.current).setView([9.0765, 7.3986], 11)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 }).addTo(map)
 
-      const demoLabel = L.control({ position: 'topright' })
+      const demoLabel = new L.Control({ position: 'topright' })
       demoLabel.onAdd = () => {
         const div = L.DomUtil.create('div', 'terrahield-demo-label')
         div.innerHTML = `<div style="background:#f7faf4;border:1px solid #c9d8cc;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#397158;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:help;" title="${mapZoneDisclaimer}">${mapDemoLabel}</div>`
