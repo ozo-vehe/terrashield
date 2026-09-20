@@ -7,8 +7,9 @@ export const metadata: Metadata = {
   description: 'Localized, explainable climate-risk intelligence for communities and planners.',
   generator: 'TerraShield',
   icons: {
-    icon: '/icon.svg',
-    apple: '/apple-icon.png',
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    shortcut: '/icon.svg',
+    apple: [{ url: '/icon.svg', type: 'image/svg+xml' }],
   },
   openGraph: {
     title: 'TerraShield · Climate risk intelligence',
@@ -16,6 +17,12 @@ export const metadata: Metadata = {
     siteName: 'TerraShield',
     type: 'website',
     images: [{ url: '/icon.svg', alt: 'TerraShield logo' }],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'TerraShield · Climate risk intelligence',
+    description: 'Localized, explainable climate-risk intelligence for communities and planners.',
+    images: ['/icon.svg'],
   },
 }
 
