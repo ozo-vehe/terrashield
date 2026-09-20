@@ -25,12 +25,15 @@ export function calculateFloodRisk(input: { rainfallIntensity: number; terrainSu
 }
 
 export function calculateHeatRisk(input: { temperatureC: number; vegetationCoverage: number; builtUpExposure: number }): RiskResult {
-  const temperature = Math.max(20, Math.min(45, input.temperatureC) - 20) / 25
-  const vegetation = 1 - Math.max(0, Math.min(100, input.vegetationCoverage)) / 100
-  const builtUp = Math.max(0, Math.min(100, input.builtUpExposure)) / 100
+  const temperatureC = Math.max(20, Math.min(45, input.temperatureC))
+  const temperature = (temperatureC - 20) / 25
+  const vegetationCoverage = Math.max(0, Math.min(100, input.vegetationCoverage))
+  const builtUpExposure = Math.max(0, Math.min(100, input.builtUpExposure))
+  const vegetation = 1 - vegetationCoverage / 100
+  const builtUp = builtUpExposure / 100
   const factors = [
-    { name: 'Temperature', value: input.temperatureC, weight: .55, contribution: temperature * 55, description: 'Temperature relative to the 20–45°C prototype range.' },
-    { name: 'Built-up exposure', value: input.builtUpExposure, weight: .25, contribution: builtUp * 25, description: 'Modeled exposure to heat-retaining built surfaces.' },
+    { name: 'Temperature', value: temperatureC, weight: .55, contribution: temperature * 55, description: 'Temperature relative to the 20–45°C scenario range.' },
+    { name: 'Built-up exposure', value: builtUpExposure, weight: .25, contribution: builtUp * 25, description: 'Modeled exposure to heat-retaining built surfaces.' },
     { name: 'Vegetation vulnerability', value: Math.round(vegetation * 100), weight: .20, contribution: vegetation * 20, description: 'Lower vegetation coverage increases this modeled vulnerability factor.' },
   ]
   const score = Math.round(temperature * 55 + builtUp * 25 + vegetation * 20)

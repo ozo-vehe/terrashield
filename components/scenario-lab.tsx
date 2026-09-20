@@ -171,7 +171,8 @@ export default function ScenarioLab() {
                       min="20"
                       max="45"
                       value={heatInputs.temperatureC}
-                      onChange={(e) => updateHeat('temperatureC', Number(e.target.value))}
+                      onInput={(e) => updateHeat('temperatureC', Number(e.currentTarget.value))}
+                      onChange={(e) => updateHeat('temperatureC', Number(e.currentTarget.value))}
                       className="w-full h-2 bg-[#e3ebe3] rounded-lg appearance-none cursor-pointer accent-[#4f806d]"
                     />
                     <p className="text-xs text-[#80958b] mt-1">20–45°C range</p>
