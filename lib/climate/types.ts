@@ -82,6 +82,21 @@ export function generateRecommendations(hazard: HazardType, result: RiskResult) 
   }))
 } 
 
+export interface ConduitObservationData {
+  timestamp: string
+  temperature?: number
+  humidity?: number
+  pressure?: number
+  windSpeed?: number
+  windDirection?: number
+  windGust?: number
+  heatIndex?: number
+  wetBulbTemperature?: number
+  rainfallGauge1?: number
+  rainfallGauge2?: number
+  uv?: number
+}
+
 export interface ClimateDataProvider { getAreas(): Promise<StudyArea[]>; getArea(id: string): Promise<StudyArea | undefined> }
 export const demoProvider: ClimateDataProvider = { async getAreas() { return demoAreas }, async getArea(id) { return demoAreas.find(a => a.id === id) } }
 export const selectedArea = demoAreas[0]
