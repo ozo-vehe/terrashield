@@ -1,4 +1,116 @@
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { dataSources } from '@/lib/climate/types'
-export default function DataPage(){return <main className="min-h-screen bg-[#f6f7f2] px-5 py-10 text-[#18332b] lg:px-8"><div className="mx-auto max-w-5xl"><Link href="/dashboard" className="text-sm text-[#5e776b]"><ArrowLeft className="mr-2 inline size-4"/>Back to dashboard</Link><p className="mt-16 text-xs font-semibold uppercase tracking-[.16em] text-[#668a79]">Data provenance</p><h1 className="mt-3 text-5xl font-semibold tracking-[-.07em]">Know where the<br/>numbers come from.</h1><p className="mt-6 max-w-xl text-lg leading-8 text-[#71887d]">The first TerraShield release uses clearly labeled synthetic values, separated behind a replaceable ClimateDataProvider contract. Live weather observations are retrieved from Open-Meteo when available; all risk scores are modeled estimates, not official forecasts.</p><div className="mt-6 flex flex-wrap gap-3 text-xs"><span className="inline-flex items-center gap-1.5 rounded-full border border-[#b8d7c2] bg-[#dcebdc] px-2.5 py-1 font-semibold uppercase tracking-[.08em] text-[#376044]"><span className="size-1.5 rounded-full bg-[#4e806e]" />Observed/Live</span><span className="inline-flex items-center gap-1.5 rounded-full border border-[#c9d8cc] bg-[#f1f5ef] px-2.5 py-1 font-semibold uppercase tracking-[.08em] text-[#397158]"><span className="size-1.5 rounded-full bg-[#5e9a75]" />Synthetic/Demo</span><span className="inline-flex items-center gap-1.5 rounded-full border border-[#e4d3a8] bg-[#fff9e9] px-2.5 py-1 font-semibold uppercase tracking-[.08em] text-[#805d16]"><span className="size-1.5 rounded-full bg-[#d8a84e]" />Modeled risk</span></div><div className="mt-12 overflow-x-auto rounded-2xl border border-[#dbe4dc] bg-white"><table className="w-full min-w-[650px] text-left text-sm"><caption className="sr-only">TerraShield prototype data provenance</caption><thead className="border-b border-[#dbe4dc] bg-[#f1f5ef] text-xs uppercase tracking-wider text-[#71887d]"><tr>{['Dataset','Type','Status','Source','Updated'].map(h=><th key={h} className="px-5 py-4 font-medium">{h}</th>)}</tr></thead><tbody>{dataSources.map(row=><tr key={row.dataset} className="border-b border-[#edf1eb] last:border-0"><td className="px-5 py-5 font-medium">{row.dataset}</td><td className="px-5 py-5 text-[#71887d]">{row.type}</td><td className="px-5 py-5"><span className="rounded-full bg-[#edf4ea] px-2.5 py-1 text-xs text-[#397158]">{row.status}</span></td><td className="px-5 py-5 text-[#71887d]">{row.source}</td><td className="px-5 py-5 text-[#71887d]">{row.updated}</td></tr>)}</tbody></table></div></div></main>}
+import { dataSources, disclaimer, conduitBadgeLabel, conduitObservedLabel, conduitDataSource } from '@/lib/climate/types'
+import { conduitSensorGroups } from '@/lib/climate/conduit'
+import ConduitDataExplorer from '@/components/conduit-data-explorer'
+
+export default function DataPage() {
+  return (
+    <main className="min-h-screen bg-[#f6f7f2] px-5 py-10 text-[#18332b] lg:px-8">
+      <div className="mx-auto max-w-5xl">
+        <Link href="/dashboard" className="text-sm text-[#5e776b]">
+          <ArrowLeft className="mr-2 inline size-4" />
+          Back to dashboard
+        </Link>
+
+        <p className="mt-16 text-xs font-semibold uppercase tracking-[.16em] text-[#668a79]">Data provenance</p>
+        <h1 className="mt-3 text-5xl font-semibold tracking-[-.07em]">
+          Know where the<br />
+          numbers come from.
+        </h1>
+        <p className="mt-6 max-w-xl text-lg leading-8 text-[#71887d]">
+          TerraShield integrates real environmental observations from the JKUAT Conduit Weather Station with clearly labeled synthetic values. Live weather observations are retrieved from Open-Meteo when available; all risk scores are modeled estimates, not official forecasts.
+        </p>
+
+        <div className="mt-6 flex flex-wrap gap-3 text-xs">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#b8d7c2] bg-[#dcebdc] px-2.5 py-1 font-semibold uppercase tracking-[.08em] text-[#376044]">
+            <span className="size-1.5 rounded-full bg-[#4e806e]" />
+            {conduitBadgeLabel} · {conduitObservedLabel}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#b8d7c2] bg-[#dcebdc] px-2.5 py-1 font-semibold uppercase tracking-[.08em] text-[#376044]">
+            <span className="size-1.5 rounded-full bg-[#4e806e]" />
+            Observed / Live
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#c9d8cc] bg-[#f1f5ef] px-2.5 py-1 font-semibold uppercase tracking-[.08em] text-[#397158]">
+            <span className="size-1.5 rounded-full bg-[#5e9a75]" />
+            Synthetic / Demo
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e4d3a8] bg-[#fff9e9] px-2.5 py-1 font-semibold uppercase tracking-[.08em] text-[#805d16]">
+            <span className="size-1.5 rounded-full bg-[#d8a84e]" />
+            Modeled risk
+          </span>
+        </div>
+
+        {/* Conduit sensor groups */}
+        <section className="mt-12">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#b8d7c2] bg-[#dcebdc] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[.08em] text-[#376044]">
+              <span className="size-1.5 rounded-full bg-[#4e806e] animate-pulse" />
+              {conduitBadgeLabel}
+            </span>
+            <h2 className="text-2xl font-semibold tracking-[-.04em]">JKUAT Conduit sensor measurements</h2>
+          </div>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#71887d]">
+            The Conduit Weather Station provides real environmental observations across multiple sensor categories. These values feed TerraShield&apos;s risk engine as observed environmental inputs.
+          </p>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {conduitSensorGroups.map((group) => (
+              <div key={group.group} className="rounded-2xl border border-[#dbe4dc] bg-white p-5">
+                <h3 className="text-sm font-semibold text-[#18332b]">{group.group}</h3>
+                <div className="mt-3 space-y-2">
+                  {group.fields.map((field) => (
+                    <div key={field.field} className="flex items-center justify-between text-xs">
+                      <span className="text-[#71887d]">{field.label}</span>
+                      <span className="font-mono text-[10px] text-[#55766a]">{field.field}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Interactive Conduit data explorer with charts + raw data */}
+        <ConduitDataExplorer />
+
+        {/* Existing data provenance table */}
+        <section className="mt-12">
+          <h2 className="text-2xl font-semibold tracking-[-.04em]">All data sources</h2>
+          <div className="mt-6 overflow-x-auto rounded-2xl border border-[#dbe4dc] bg-white">
+            <table className="w-full min-w-[650px] text-left text-sm">
+              <caption className="sr-only">TerraShield data provenance</caption>
+              <thead className="border-b border-[#dbe4dc] bg-[#f1f5ef] text-xs uppercase tracking-wider text-[#71887d]">
+                <tr>
+                  {['Dataset', 'Type', 'Status', 'Source', 'Updated'].map((h) => (
+                    <th key={h} className="px-5 py-4 font-medium">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-[#edf1eb]">
+                  <td className="px-5 py-5 font-medium">JKUAT Conduit observations</td>
+                  <td className="px-5 py-5 text-[#71887d]">Observed</td>
+                  <td className="px-5 py-5"><span className="rounded-full bg-[#dcebdc] px-2.5 py-1 text-xs text-[#376044]">Live</span></td>
+                  <td className="px-5 py-5 text-[#71887d]">{conduitDataSource}</td>
+                  <td className="px-5 py-5 text-[#71887d]">Real-time</td>
+                </tr>
+                {dataSources.map((row) => (
+                  <tr key={row.dataset} className="border-b border-[#edf1eb] last:border-0">
+                    <td className="px-5 py-5 font-medium">{row.dataset}</td>
+                    <td className="px-5 py-5 text-[#71887d]">{row.type}</td>
+                    <td className="px-5 py-5"><span className="rounded-full bg-[#edf4ea] px-2.5 py-1 text-xs text-[#397158]">{row.status}</span></td>
+                    <td className="px-5 py-5 text-[#71887d]">{row.source}</td>
+                    <td className="px-5 py-5 text-[#71887d]">{row.updated}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <p className="mt-8 text-xs leading-5 text-[#80958b]">{disclaimer}</p>
+      </div>
+    </main>
+  )
+}

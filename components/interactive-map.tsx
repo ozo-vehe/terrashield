@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import type * as Leaflet from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { demoAreas, scoreColor, mapDemoLabel, mapZoneDisclaimer } from '@/lib/climate/types'
+import { demoAreas, scoreColor, mapDemoLabel, mapZoneDisclaimer, conduitStationLat, conduitStationLng, conduitStationName, conduitBadgeLabel } from '@/lib/climate/types'
 
 interface InteractiveMapProps { hazard?: 'flood' | 'heat'; onAreaSelect?: (areaId: string) => void }
 export default function InteractiveMap({ hazard = 'flood', onAreaSelect }: InteractiveMapProps) {
@@ -25,6 +25,15 @@ export default function InteractiveMap({ hazard = 'flood', onAreaSelect }: Inter
         return div
       }
       demoLabel.addTo(map)
+
+      const stationIcon = L.divIcon({
+        className: 'terrahield-station-marker',
+        html: '<div style="width:28px;height:28px;border-radius:50%;background:#18332b;border:3px solid #d8a84e;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3)"><div style="width:8px;height:8px;border-radius:50%;background:#d8a84e;animation:pulse 2s infinite"></div></div>',
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+      })
+      const stationMarker = L.marker([conduitStationLat, conduitStationLng], { icon: stationIcon }).addTo(map)
+      stationMarker.bindPopup(`<div style="font-family:Arial,sans-serif"><strong style="color:#18332b">${conduitStationName}</strong><br/><span style="color:#376044;font-weight:600;font-size:10px;text-transform:uppercase">${conduitBadgeLabel} · OBSERVED DATA</span><br/><span style="font-size:11px;color:#71887d">Real environmental observations from this station feed TerraShield's risk engine.</span></div>`)
 
       demoAreas.forEach((area) => {
         const score = hazard === 'flood' ? area.flood : area.heat
