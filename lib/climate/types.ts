@@ -123,6 +123,13 @@ export const fallbackWeatherMessage = 'Live weather unavailable. Showing Abuja d
 export const modeledRiskLabel = 'MODELED RISK'
 export const demoEnvironmentLabel = 'Demo environment'
 export const mapDemoLabel = 'DEMO DATA · Illustrative modeled zones'
+export const conduitBadgeLabel = 'JKUAT CONDUIT'
+export const conduitObservedLabel = 'OBSERVED DATA'
+export const conduitUnavailableMessage = 'JKUAT Conduit unavailable — showing synthetic demonstration data.'
+export const conduitStationName = 'JKUAT Conduit Weather Station'
+export const conduitDataSource = 'JKUAT Conduit Weather Station API'
+export const conduitStationLat = -1.1530
+export const conduitStationLng = 37.0050
 export const sourceTypeLabel = 'Real-time weather API'
 export const areaCoordinates = (area: StudyArea) => `${area.lat.toFixed(4)}° N, ${area.lng.toFixed(4)}° E`
 export const mapZones = demoAreas.map((area, i) => ({ ...area, x: 14 + (i % 4) * 24 + ((i * 7) % 8), y: 16 + Math.floor(i / 4) * 22 + ((i * 5) % 8) }))

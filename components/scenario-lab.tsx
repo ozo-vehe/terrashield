@@ -1,11 +1,19 @@
 'use client'
 import Link from 'next/link'
-import { useState } from 'react'
-import { ArrowLeft, ShieldCheck, Droplets, Sun, SlidersHorizontal, Lightbulb, TrendingUp, TrendingDown, Minus } from 'lucide-react'
-import { calculateFloodRisk, calculateHeatRisk, generateRecommendations, riskLevel, riskLabel, scenarioDefaults, demoBadgeLabel, disclaimer, modeledRiskLabel } from '@/lib/climate/types'
+import { useEffect, useState } from 'react'
+import { ArrowLeft, ShieldCheck, Droplets, Sun, SlidersHorizontal, Lightbulb, TrendingUp, TrendingDown, Minus, Activity, CircleAlert as AlertCircle } from 'lucide-react'
+import { calculateFloodRisk, calculateHeatRisk, generateRecommendations, riskLevel, riskLabel, scenarioDefaults, demoBadgeLabel, disclaimer, modeledRiskLabel, conduitBadgeLabel, conduitObservedLabel, conduitUnavailableMessage } from '@/lib/climate/types'
+import type { EnvironmentalObservation } from '@/lib/climate/conduit'
 
 type FloodInputs = { rainfallIntensity: number; terrainSusceptibility: number; drainageSusceptibility: number }
 type HeatInputs = { temperatureC: number; vegetationCoverage: number; builtUpExposure: number }
+
+type ConduitApiResponse = {
+  latest?: EnvironmentalObservation
+  count?: number
+  error?: { code: string; message: string }
+  fallback?: boolean
+}
 
 function DemoBadge() {
   return (
@@ -16,11 +24,71 @@ function DemoBadge() {
   )
 }
 
+function ConduitBadge() {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#b8d7c2] bg-[#dcebdc] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[.08em] text-[#376044]" title="Real environmental observations from the JKUAT Conduit Weather Station.">
+      <span className="size-1.5 rounded-full bg-[#4e806e] animate-pulse" />
+      {conduitBadgeLabel} · {conduitObservedLabel}
+    </span>
+  )
+}
+
+function fmtNum(n: number | undefined, digits = 1): string {
+  if (n === undefined || n === null || !Number.isFinite(n)) return '—'
+  return n.toFixed(digits)
+}
+
 export default function ScenarioLab() {
   const [hazard, setHazard] = useState<'flood' | 'heat'>('flood')
   const [floodInputs, setFloodInputs] = useState<FloodInputs>({ ...scenarioDefaults.flood })
   const [heatInputs, setHeatInputs] = useState<HeatInputs>({ ...scenarioDefaults.heat })
   const [scenarioA, setScenarioA] = useState<FloodInputs | HeatInputs | null>(null)
+  const [conduitLatest, setConduitLatest] = useState<EnvironmentalObservation | null>(null)
+  const [conduitLoading, setConduitLoading] = useState(true)
+  const [conduitError, setConduitError] = useState<string | null>(null)
+  const [initializedFromConduit, setInitializedFromConduit] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setConduitLoading(true)
+    fetch('/api/conduit/weather?days=1')
+      .then((r) => r.json())
+      .then((v: ConduitApiResponse) => {
+        if (cancelled) return
+        if (v.latest) {
+          setConduitLatest(v.latest)
+          setConduitError(null)
+        } else {
+          setConduitError(v.error?.message ?? conduitUnavailableMessage)
+        }
+        setConduitLoading(false)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setConduitError('Unable to retrieve Conduit data.')
+        setConduitLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [])
+
+  // Initialize scenario inputs from real Conduit observations
+  useEffect(() => {
+    if (conduitLatest && !initializedFromConduit) {
+      const rainfallMm = conduitLatest.rainfallGauge1Today ?? conduitLatest.rainfallGauge1 ?? conduitLatest.rainfallGauge2Today ?? conduitLatest.rainfallGauge2 ?? 0
+      const tempC = conduitLatest.temperatureSht ?? conduitLatest.temperature ?? conduitLatest.temperatureBmx ?? conduitLatest.temperatureMcp ?? 25
+      setFloodInputs({
+        rainfallIntensity: Math.max(0, Math.min(150, Math.round(rainfallMm))),
+        terrainSusceptibility: scenarioDefaults.flood.terrainSusceptibility,
+        drainageSusceptibility: scenarioDefaults.flood.drainageSusceptibility,
+      })
+      setHeatInputs({
+        temperatureC: Math.max(20, Math.min(45, Math.round(tempC))),
+        vegetationCoverage: scenarioDefaults.heat.vegetationCoverage,
+        builtUpExposure: scenarioDefaults.heat.builtUpExposure,
+      })
+      setInitializedFromConduit(true)
+    }
+  }, [conduitLatest, initializedFromConduit])
 
   const isFlood = hazard === 'flood'
   const result = isFlood
@@ -40,8 +108,23 @@ export default function ScenarioLab() {
   }
 
   const handleReset = () => {
-    if (isFlood) setFloodInputs({ ...scenarioDefaults.flood })
-    else setHeatInputs({ ...scenarioDefaults.heat })
+    if (conduitLatest) {
+      const rainfallMm = conduitLatest.rainfallGauge1Today ?? conduitLatest.rainfallGauge1 ?? conduitLatest.rainfallGauge2Today ?? conduitLatest.rainfallGauge2 ?? 0
+      const tempC = conduitLatest.temperatureSht ?? conduitLatest.temperature ?? conduitLatest.temperatureBmx ?? conduitLatest.temperatureMcp ?? 25
+      setFloodInputs({
+        rainfallIntensity: Math.max(0, Math.min(150, Math.round(rainfallMm))),
+        terrainSusceptibility: scenarioDefaults.flood.terrainSusceptibility,
+        drainageSusceptibility: scenarioDefaults.flood.drainageSusceptibility,
+      })
+      setHeatInputs({
+        temperatureC: Math.max(20, Math.min(45, Math.round(tempC))),
+        vegetationCoverage: scenarioDefaults.heat.vegetationCoverage,
+        builtUpExposure: scenarioDefaults.heat.builtUpExposure,
+      })
+    } else {
+      if (isFlood) setFloodInputs({ ...scenarioDefaults.flood })
+      else setHeatInputs({ ...scenarioDefaults.heat })
+    }
     setScenarioA(null)
   }
 
@@ -56,6 +139,9 @@ export default function ScenarioLab() {
     : null
   const delta = scenarioAScore !== null ? result.score - scenarioAScore : null
   const deltaDirection = delta !== null ? (delta > 0 ? 'increased' : delta < 0 ? 'decreased' : 'unchanged') : null
+
+  const observedRainfall = conduitLatest?.rainfallGauge1Today ?? conduitLatest?.rainfallGauge1
+  const observedTemp = conduitLatest?.temperatureSht ?? conduitLatest?.temperature
 
   return (
     <div className="min-h-screen bg-[#f6f7f2] text-[#18332b]">
@@ -73,11 +159,35 @@ export default function ScenarioLab() {
         <div className="mb-9">
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-xs font-semibold uppercase tracking-[.14em] text-[#71887d]">Model experimentation</p>
-            <DemoBadge />
+            {conduitLatest ? <ConduitBadge /> : <DemoBadge />}
           </div>
           <h1 className="mt-2 text-4xl font-semibold tracking-[-.055em]">Scenario lab</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#71887d]">Adjust environmental parameters to see how different conditions affect modeled risk scores. Explore what-if scenarios and understand how each factor contributes to overall risk. All scores are modeled estimates, not official forecasts.</p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#71887d]">Adjust environmental parameters to see how different conditions affect modeled risk scores. {conduitLatest ? 'Sliders start from the latest real JKUAT Conduit observations — change them to explore hypothetical scenarios.' : 'Explore what-if scenarios and understand how each factor contributes to overall risk.'} All scores are modeled estimates, not official forecasts.</p>
         </div>
+
+        {/* Observed conditions banner */}
+        {conduitLoading && (
+          <div className="mb-6 rounded-xl border border-[#c9d8cc] bg-[#edf5ec] p-4 text-sm text-[#55766a]" role="status">
+            <Activity className="mr-2 inline size-4 animate-pulse" /> Loading latest JKUAT Conduit observations…
+          </div>
+        )}
+        {conduitError && !conduitLatest && (
+          <div className="mb-6 flex items-start gap-2 rounded-xl border border-[#e9c46a]/50 bg-[#fff9e9] p-4 text-xs text-[#805d16]" role="alert">
+            <AlertCircle className="mt-0.5 size-4 shrink-0" />
+            <span>{conduitError}. Scenario sliders are using default demonstration values.</span>
+          </div>
+        )}
+        {conduitLatest && (
+          <div className="mb-6 rounded-xl border border-[#b8d7c2] bg-[#edf5ec] p-4">
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <span className="font-semibold uppercase tracking-[.1em] text-[10px] text-[#55766a]">OBSERVED · JKUAT CONDUIT</span>
+              <span>Temperature: <strong className="text-[#18332b]">{fmtNum(observedTemp)}°C</strong></span>
+              {observedRainfall !== undefined && <span>Rainfall (today): <strong className="text-[#18332b]">{fmtNum(observedRainfall)} mm</strong></span>}
+              {conduitLatest.humidity !== undefined && <span>Humidity: <strong className="text-[#18332b]">{fmtNum(conduitLatest.humidity, 0)}%</strong></span>}
+              {conduitLatest.windSpeed !== undefined && <span>Wind: <strong className="text-[#18332b]">{fmtNum(conduitLatest.windSpeed)} m/s</strong></span>}
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-8 lg:grid-cols-[1fr_1.2fr]">
           {/* Controls */}
@@ -110,12 +220,20 @@ export default function ScenarioLab() {
               </div>
             </div>
 
+            <div className="mb-4 rounded-lg bg-[#f1f5ef] px-3 py-2 text-[11px] text-[#55766a]">
+              <span className="font-semibold uppercase tracking-[.08em] text-[10px]">SCENARIO · NOT OBSERVED</span>
+              <p className="mt-1">Changing these values creates a hypothetical scenario. It does not change what Conduit actually measured.</p>
+            </div>
+
             <div className="space-y-6 border-t border-[#e5ece6] pt-6">
               {isFlood ? (
                 <>
                   <div>
                     <label htmlFor="rainfall-slider" className="block text-sm font-medium mb-2">
                       Rainfall intensity: {floodInputs.rainfallIntensity} mm
+                      {conduitLatest && observedRainfall !== undefined && (
+                        <span className="ml-2 text-[10px] font-normal text-[#4e806e]">(observed: {fmtNum(observedRainfall)} mm)</span>
+                      )}
                     </label>
                     <input
                       id="rainfall-slider"
@@ -164,6 +282,9 @@ export default function ScenarioLab() {
                   <div>
                     <label htmlFor="temp-slider" className="block text-sm font-medium mb-2">
                       Temperature: {heatInputs.temperatureC}°C
+                      {conduitLatest && observedTemp !== undefined && (
+                        <span className="ml-2 text-[10px] font-normal text-[#4e806e]">(observed: {fmtNum(observedTemp)}°C)</span>
+                      )}
                     </label>
                     <input
                       id="temp-slider"
@@ -216,7 +337,7 @@ export default function ScenarioLab() {
                 onClick={handleReset}
                 className="flex-1 rounded-lg border border-[#dbe4dc] px-4 py-2 text-sm font-medium text-[#5a7067] hover:bg-[#f7faf4] transition"
               >
-                Reset to defaults
+                {conduitLatest ? 'Reset to observed' : 'Reset to defaults'}
               </button>
               <button
                 onClick={handleSaveScenarioA}
@@ -279,6 +400,11 @@ export default function ScenarioLab() {
               </div>
               <p className="mt-5 pt-4 border-t border-[#e5ece6] text-xs leading-5 text-[#71887d]">
                 {result.explanation}
+                {conduitLatest && (
+                  <> {isFlood
+                    ? `Rainfall input sourced from the latest JKUAT Conduit observation (${fmtNum(observedRainfall)} mm today total).`
+                    : `Temperature input sourced from the latest JKUAT Conduit observation (${fmtNum(observedTemp)}°C).`}</>
+                )}
               </p>
             </div>
 
